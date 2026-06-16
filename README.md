@@ -86,7 +86,7 @@ OPENCODE_SKILL_POLYFILL=on    # always use this plugin's skill polyfill
 ## Install
 
 ```bash
-opencode plugin opencode-lazy-skills --global
+opencode plugin @felipegenef/opencode-lazy-skills --global
 ```
 
 ## Updating
@@ -96,7 +96,7 @@ it does **not** re-check the registry on later launches. To pick up a new releas
 re-fetch:
 
 ```bash
-opencode plugin opencode-lazy-skills --global --force
+opencode plugin @felipegenef/opencode-lazy-skills --global --force
 ```
 
 Without `--force`, opencode sees the plugin is already configured and skips re-fetching, even if
