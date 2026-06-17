@@ -37,6 +37,7 @@
 import { createLogger } from './services/logger';
 import { createSkillRegistry } from './services/SkillRegistry';
 import { createSkillFinder } from './tools/SkillFinder';
+import { createSkillInfo } from './tools/SkillInfo';
 import { createSkillLoader } from './tools/SkillUser';
 import type { PluginConfig } from './types';
 
@@ -49,6 +50,7 @@ export const createApi = async (config: PluginConfig) => {
     logger,
     config,
     findSkills: createSkillFinder(registry),
+    skillInfo: createSkillInfo(registry),
     loadSkill: createSkillLoader(registry),
   };
 };

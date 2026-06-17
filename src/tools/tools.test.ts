@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { createSkillRegistry } from '../services/SkillRegistry';
 import { createSkillFinder } from './SkillFinder';
+import { createSkillInfo } from './SkillInfo';
 import { createSkillLoader } from './SkillUser';
 
 let tmpDir: string;
@@ -42,7 +43,9 @@ describe('createSkillFinder', () => {
     const finder = createSkillFinder(registry);
     const result = await finder({ query: 'git' });
     expect(result.skills.length).toBeGreaterThanOrEqual(1);
-    expect(result.skills[0].description).toContain('commit');
+    // skillsearch returns names only — descriptions come from skillinfo.
+    expect(result.skills[0]).toBe('git');
+    expect(typeof result.skills[0]).toBe('string');
     expect(result.summary.total).toBeGreaterThanOrEqual(2);
   });
 
@@ -57,6 +60,37 @@ describe('createSkillFinder', () => {
     const result = await finder({ query: 'nonexistent12345' });
     expect(result.skills).toHaveLength(0);
     expect(result.summary.matches).toBe(0);
+  });
+});
+
+describe('createSkillInfo', () => {
+  it('returns descriptions for existing skill names', async () => {
+    const registry = await createSkillRegistry(
+      { debug: false, basePaths: [join(tmpDir, 'skills')] },
+      { debug: () => {}, log: () => {}, error: () => {}, warn: () => {} }
+    );
+    await registry.initialise();
+
+    const info = createSkillInfo(registry);
+    const result = await info({ names: 'git' });
+    expect(result.skills).toHaveLength(1);
+    expect(result.skills[0].name).toBe('git');
+    expect(result.skills[0].description).toContain('commit');
+    expect(result.notFound).toHaveLength(0);
+  });
+
+  it('reports not found names and accepts arrays', async () => {
+    const registry = await createSkillRegistry(
+      { debug: false, basePaths: [join(tmpDir, 'skills')] },
+      { debug: () => {}, log: () => {}, error: () => {}, warn: () => {} }
+    );
+    await registry.initialise();
+
+    const info = createSkillInfo(registry);
+    const result = await info({ names: ['git', 'nonexistent'] });
+    expect(result.skills).toHaveLength(1);
+    expect(result.skills[0].name).toBe('git');
+    expect(result.notFound).toEqual(['nonexistent']);
   });
 });
 

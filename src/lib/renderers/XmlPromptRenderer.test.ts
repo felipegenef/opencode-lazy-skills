@@ -24,17 +24,35 @@ describe('createXmlPromptRenderer', () => {
     expect(xml).toContain('<description>Write good commits</description>');
   });
 
-  it('renders SkillSearchResults type', () => {
+  it('renders SkillSearchResults type with a names-only array', () => {
     const xml = renderer.render({
       type: 'SkillSearchResults',
       data: {
-        matches: [{ name: 'git-commit' }],
-        totalMatches: 1,
+        skills: ['git-commit', 'go-testing'],
+        summary: { matches: 2 },
       },
     });
 
     expect(xml).toContain('<SkillSearchResults>');
-    expect(xml).toContain('<totalMatches>1</totalMatches>');
+    // Names render as whole values, not character-by-character.
+    expect(xml).toContain('<skills>git-commit</skills>');
+    expect(xml).toContain('<skills>go-testing</skills>');
+    expect(xml).toContain('<matches>2</matches>');
+  });
+
+  it('renders SkillInfoResults type', () => {
+    const xml = renderer.render({
+      type: 'SkillInfoResults',
+      data: {
+        skills: [{ name: 'git-commit', description: 'Write good commits' }],
+        notFound: ['missing'],
+      },
+    });
+
+    expect(xml).toContain('<SkillInfoResults>');
+    expect(xml).toContain('<name>git-commit</name>');
+    expect(xml).toContain('<description>Write good commits</description>');
+    expect(xml).toContain('<notFound>missing</notFound>');
   });
 
   it('renders SkillResource type', () => {

@@ -56,6 +56,7 @@ describe('SkillsPlugin native skill tool detection', () => {
     const hooks = await SkillsPlugin(makeCtx() as any);
     expect(hooks.tool!.skill).toBeDefined();
     expect(hooks.tool!.skillsearch).toBeDefined();
+    expect(hooks.tool!.skillinfo).toBeDefined();
   });
 
   it('the polyfill "skill" tool returns native-shaped output inline', async () => {

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0 — 2026-06-16
+
+Reworks skill discovery into a three-step, compulsory workflow so agents (and subagents) reliably
+look for skills before acting, while keeping the discovery step token-cheap.
+
+- **`skillsearch` now returns matching skill NAMES only**, not name + description. Discovery stays
+  cheap no matter how many skills match; descriptions are fetched only when actually needed.
+- **New `skillinfo` tool** returns the description(s) for one or more named skills without loading
+  them. The agent confirms a match before paying to load the full skill content.
+- **The system-prompt instruction is now an emphatic, mandatory workflow**: search by keywords
+  first on every task → decide from the names → `skillinfo` if unsure → `skill` to load and obey.
+  This addresses agents/subagents skipping skill discovery and relying on their own assumptions.
+- **Fixed a latent `jsonToXml` bug** where primitive array items (e.g. skill names) were rendered
+  character-by-character instead of as whole values.
+
 ## 1.0.0 — 2026-06-16
 
 First release of **`opencode-lazy-skills`** — a token-saving plugin that replaces opencode's

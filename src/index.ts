@@ -29,7 +29,26 @@ const hasNativeSkillTool = (): boolean => {
 const SKILLS_INSTRUCTION = `<skills>
 A skill is a set of reusable, expert instructions for one kind of task — a specific library, tool, workflow, file format, or domain. When a skill covers the task at hand it carries the correct, current way to do it, and proceeding from your own assumptions instead risks a confident but wrong result.
 
-IMPORTANT: When a task has a recognizable specialty — a named library or tool, a defined workflow, a particular format — call \`skillsearch\` first with a few precise keywords for that specialty (e.g. "git commit message", "postgres migration", "pdf form fill"). If a result fits, call \`skill\` with its exact name to load its full instructions, then follow them in preference to your own defaults. For routine work with no such specialty, proceed without searching.
+MANDATORY WORKFLOW — follow it for every task before you act:
+
+1. SEARCH FIRST — IT IS THE FIRST STEP OF THE TASK, NOT A CHOICE. The moment a task arrives, before any other tool call and before you write, edit, run, or explain anything, call \`skillsearch\` with a few precise keywords for the specialty or technology involved.
+   **Do NOT decide for yourself whether a skill is needed — that judgment is not yours to make here.** You cannot know which skills exist, or whether one overrides your usual approach, until you search; so "I already know how to do this" is never a reason to skip. Your own knowledge may be outdated or wrong for this project, and the search is the only way to find out. It returns only skill NAMES, so it costs almost nothing. The one unacceptable outcome is doing the task the wrong way because the right skill existed and you never looked.
+   <example>I have to write a PDF file → skillsearch("pdf")</example>
+   <example>I have to edit an Excel spreadsheet → skillsearch("excel microsoft spreadsheet sheet")</example>
+   <example>I have to build a React app with Tailwind CSS → skillsearch("react tailwind css javascript")</example>
+
+2. DECIDE FROM THE NAMES.
+   - If a returned name clearly matches the task, load it with \`skill\` (see below).
+   - If a name looks relevant but you are not certain it fits, use \`skillinfo\` to read its description before deciding.
+   - If nothing returned is relevant, proceed without a skill.
+
+3. CHECK A DESCRIPTION WHEN UNSURE. \`skillinfo\` returns each named skill's one-line description WITHOUT loading its full content. Use it when a name alone is ambiguous — when several names look plausible and you need to pick, or when a name is generic and you cannot tell from it whether the skill covers your case. Pass one name or several at once to compare them. Then confirm the match and load it with \`skill\`, or rule it out. Never load a skill with \`skill\` just to find out what it is — that is what \`skillinfo\` is for.
+   <example>I need to fill a PDF form; skillsearch returned "pdf-tools". The name is generic → skillinfo("pdf-tools") → "Extract text from PDFs for analysis." That is reading, not form-filling → do not load.</example>
+   <example>I need to fill a PDF form; skillsearch returned "pdf-forms". Unsure if it covers filling → skillinfo("pdf-forms") → "Fill and flatten PDF form fields." Exact match → load it.</example>
+
+4. LOAD AND OBEY. Call \`skill\` with the exact name to load the full instructions, then follow them in preference to your own defaults.
+
+In short: every task begins with \`skillsearch\`. No exceptions.
 </skills>`;
 
 export const SkillsPlugin: Plugin = async (ctx) => {
@@ -66,7 +85,12 @@ export const SkillsPlugin: Plugin = async (ctx) => {
 
     tool: {
       skillsearch: tool({
-        description: 'Search for skills using natural query syntax',
+        description:
+          'REQUIRED first step before any task: search available skills by keyword. ' +
+          'Returns only the NAMES of matching skills (token-cheap). ' +
+          'If a name clearly fits, load it with `skill`. If you need a name\'s description ' +
+          'before deciding, call `skillinfo` first. Accepts natural query syntax ' +
+          '(quoted phrases, -exclusions, multiple terms). Use "*" to list every skill.',
         args: {
           query: tool.schema
             .union([tool.schema.string(), tool.schema.array(tool.schema.string())])
@@ -76,6 +100,23 @@ export const SkillsPlugin: Plugin = async (ctx) => {
           const renderer = promptRenderer.getFormatter();
           const results = await api.findSkills(args);
           return renderer({ data: results, type: 'SkillSearchResults' });
+        },
+      }),
+
+      skillinfo: tool({
+        description:
+          'Get the description(s) for one or more skill names returned by `skillsearch`, ' +
+          'WITHOUT loading their full content. Use this when a skill name alone is not ' +
+          'enough to decide whether it fits the task. To actually load a skill, use `skill`.',
+        args: {
+          names: tool.schema
+            .union([tool.schema.string(), tool.schema.array(tool.schema.string())])
+            .describe('A skill name, or array of names, from skillsearch.'),
+        },
+        execute: async (args, _toolCtx: ToolContext) => {
+          const renderer = promptRenderer.getFormatter();
+          const results = await api.skillInfo(args);
+          return renderer({ data: results, type: 'SkillInfoResults' });
         },
       }),
 

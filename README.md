@@ -38,7 +38,8 @@ AFTER (with plugin) ── catalog replaced by a short on-demand note:
 │ # Doing tasks...                                        │
 │ <skills>                                                │
 │   Specialized skills are available on demand.           │
-│   - skillsearch <topic>  → find a skill                 │
+│   - skillsearch <topic>  → find skills (names only)     │
+│   - skillinfo <name>     → read a skill's description   │
 │   - skill <name>         → load its instructions        │
 │ </skills>                                               │
 └────────────────────────────────────────────────────────┘
@@ -56,8 +57,11 @@ strips out (the `BEFORE` block above is an abbreviated version of it).
    stripped from the system prompt and replaced with a short note telling the agent that skills
    exist and how to find them on demand. You pay for the skills you actually use, not the whole
    catalog on every turn.
-2. **Adds `skillsearch`** — search/discovery, which opencode has no native equivalent for.
-3. **Provides `skill` only when opencode doesn't.** See below.
+2. **Adds `skillsearch`** — keyword discovery that returns matching skill **names only**, keeping
+   the search cheap no matter how many skills match. opencode has no native equivalent.
+3. **Adds `skillinfo`** — fetches a skill's description on demand, so the agent can confirm a
+   match before paying to load the whole skill.
+4. **Provides `skill` only when opencode doesn't.** See below.
 
 ## Works *with* opencode's native skill tool
 
@@ -131,7 +135,8 @@ rm -rf ~/.cache/opencode/packages/@felipegenef/opencode-lazy-skills@latest
 
 | Tool | What it does | Always available? |
 |------|--------------|-------------------|
-| `skillsearch` | Search skills by topic (returns name + description) | Yes |
+| `skillsearch` | Search skills by topic — returns matching **names only** (token-cheap) | Yes |
+| `skillinfo` | Return the **description(s)** for one or more named skills, without loading them | Yes |
 | `skill` | Load a skill's full content into context (and report its base directory + file paths) | Native on ≥1.16.0; polyfill on <1.16.0 |
 
 A typical session:
@@ -140,11 +145,17 @@ A typical session:
 Agent: "I need to write Go tests. Let me find the right skill."
   → skillsearch("go testing")
 
+Plugin returns names only:
+   - go-testing
+   - go-benchmarking
+
+Agent: "The name fits, but let me confirm before loading."
+  → skillinfo("go-testing")
+
 Plugin returns:
    - go-testing: Table-driven tests, subtests, parallel, testdata...
-   - go-benchmarking: Benchmarks, fuzzing
 
-Agent: "Load the main testing skill."
+Agent: "That's the one. Load it."
   → skill({ name: "go-testing" })
 
 The skill's full content is now in context, along with its base

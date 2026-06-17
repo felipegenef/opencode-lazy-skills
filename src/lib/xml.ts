@@ -63,7 +63,15 @@ export function jsonToXml(json: object, rootElement: string = 'root'): string {
 
     if (Array.isArray(value)) {
       for (const item of value) {
-        xml += jsonToXml(item, key);
+        // Primitive items (e.g. an array of skill names) render as <key>value</key>.
+        // Recursing into a string would iterate its character indices.
+        if (typeof item === 'object' && item !== null) {
+          xml += jsonToXml(item, key);
+        } else if (item !== undefined && item !== null) {
+          xml += `<${key}>${escapeXml(String(item))}</${key}>`;
+        } else {
+          xml += `<${key}/>`;
+        }
       }
     } else if (value instanceof Map) {
       xml += jsonToXml(mapToObject(value), key);

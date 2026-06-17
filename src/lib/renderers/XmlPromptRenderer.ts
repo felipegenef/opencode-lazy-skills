@@ -22,6 +22,7 @@ export const createXmlPromptRenderer = () => {
     if (args.type === 'Skill') return jsonToXml(prepareSkill(args.data), rootElement);
     if (args.type === 'SkillResource') return jsonToXml(args.data, rootElement);
     if (args.type === 'SkillSearchResults') return jsonToXml(args.data, rootElement);
+    if (args.type === 'SkillInfoResults') return jsonToXml(args.data, rootElement);
     return jsonToXml({}, rootElement);
   };
 

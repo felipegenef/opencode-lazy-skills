@@ -11,7 +11,9 @@
  *
  * RETURN VALUE: Object with:
  * - query: original query for user reference
- * - skills: matched skills with toolName and description
+ * - skills: matched skill NAMES only (token-cheap discovery step). To see a
+ *   skill's description before committing to load it, the caller follows up
+ *   with `skillinfo`; to load it, with `skill`.
  * - summary: metadata (total skills, matches found, feedback message)
  * - debug: registry debug info (only if enabled in config)
  *
@@ -37,10 +39,9 @@ export function createSkillFinder(provider: SkillRegistry) {
 
     const result = provider.search(args.query);
 
-    const skills = result.matches.map((skill) => ({
-      name: skill.toolName,
-      description: skill.description,
-    }));
+    // Names only — descriptions are fetched on demand via `skillinfo` so the
+    // discovery step stays cheap even when many skills match.
+    const skills = result.matches.map((skill) => skill.toolName);
 
     return {
       query: args.query,
