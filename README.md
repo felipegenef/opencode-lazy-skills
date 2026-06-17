@@ -46,6 +46,10 @@ The full catalog (and its tokens) is gone; the agent fetches only
 the one skill it actually needs, only when it needs it.
 ```
 
+See [`examples/full-opencode-system-prompt.md`](examples/full-opencode-system-prompt.md) for a real,
+complete opencode system prompt — including the full `<available_skills>` catalog that this plugin
+strips out (the `BEFORE` block above is an abbreviated version of it).
+
 ## What this plugin does
 
 1. **Replaces the catalog with a one-line instruction.** The `<available_skills>` block is
@@ -102,6 +106,27 @@ opencode plugin @felipegenef/opencode-lazy-skills --global --force
 Without `--force`, opencode sees the plugin is already configured and skips re-fetching, even if
 a newer version has been published.
 
+## Uninstalling
+
+Remove the plugin entry from the `plugin` array in your opencode config
+(`~/.config/opencode/opencode.jsonc` for a global install, or `.opencode/opencode.jsonc` for a
+project-local one):
+
+```jsonc
+{
+  "plugin": [
+    "@felipegenef/opencode-lazy-skills"  // ← delete this line
+  ]
+}
+```
+
+On the next launch opencode stops loading the plugin and the original `<available_skills>` catalog
+is back in the system prompt. To also drop the cached package from disk, delete its folder:
+
+```bash
+rm -rf ~/.cache/opencode/packages/@felipegenef/opencode-lazy-skills@latest
+```
+
 ## Tools
 
 | Tool | What it does | Always available? |
@@ -155,9 +180,6 @@ To override, create `.opencode-skillful.json` in your project root:
   "basePaths": ["~/.config/opencode/skills", ".opencode/skills"]
 }
 ```
-
-See [`examples/full-opencode-system-prompt.md`](examples/full-opencode-system-prompt.md) for the
-full opencode system prompt, including the `<available_skills>` catalog this plugin replaces.
 
 ## Building
 
