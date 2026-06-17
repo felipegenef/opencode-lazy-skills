@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-06-17
+
+Makes the search instruction cover non-build tasks and technologies discovered mid-task.
+
+- **Prompt covers non-build tasks and discovered technologies.** Agents were skipping `skillsearch`
+  on "exploration"/review/debug requests because every example demonstrated a build task. The
+  instruction now explicitly requires searching before reviewing, evaluating, debugging, or
+  explaining too, and requires searching again for any technology discovered mid-task (not only
+  ones named up front) — with examples for each (review, repo exploration, debugging).
+
 ## 1.2.0 — 2026-06-17
 
 Fixes the search algorithm so descriptive, multi-keyword queries actually return results.
@@ -13,6 +23,9 @@ Fixes the search algorithm so descriptive, multi-keyword queries actually return
   candidates float to the top.
 - **Results are capped to the top 6** for keyword queries so OR-matching doesn't flood the caller;
   the wildcard list-all (`*`) query is never capped. Feedback notes when results were trimmed.
+- **Exclusion-only queries work again** (e.g. `-rebase` = "everything except rebase"). The AND→OR
+  switch had made an empty include-list match nothing; a query with no positive terms now browses
+  all skills with exclusions applied.
 
 ## 1.1.0 — 2026-06-16
 

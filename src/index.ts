@@ -31,11 +31,15 @@ A skill is a set of reusable, expert instructions for one kind of task — a spe
 
 MANDATORY WORKFLOW — follow it for every task before you act:
 
-1. SEARCH FIRST — IT IS THE FIRST STEP OF THE TASK, NOT A CHOICE. The moment a task arrives, before any other tool call and before you write, edit, run, or explain anything, call \`skillsearch\` with a few precise keywords for the specialty or technology involved.
+1. SEARCH FIRST — IT IS THE FIRST STEP OF THE TASK, NOT A CHOICE. Before you write, edit, run, review, evaluate, debug, or explain anything involving a technology, library, tool, file format, or workflow, call \`skillsearch\` with a few precise keywords for it.
+   This applies to EVERY kind of request — not just "build X" tasks. Reading, reviewing, evaluating, debugging, and explaining code all count: you need the correct technical context just as much before you analyze something as before you write it. "This is only exploration, not a real task" is NOT an exception — there are no exceptions.
    **Do NOT decide for yourself whether a skill is needed — that judgment is not yours to make here.** You cannot know which skills exist, or whether one overrides your usual approach, until you search; so "I already know how to do this" is never a reason to skip. Your own knowledge may be outdated or wrong for this project, and the search is the only way to find out. It returns only skill NAMES, so it costs almost nothing. The one unacceptable outcome is doing the task the wrong way because the right skill existed and you never looked.
+   If you do not yet know which technology is involved (e.g. "what's in this repo?"), explore just enough to identify it, then \`skillsearch\` each technology you find BEFORE acting on it or drawing conclusions. The requirement is continuous, not only at the start: search for technologies named in the request AND for any you discover while working.
    <example>I have to write a PDF file → skillsearch("pdf")</example>
-   <example>I have to edit an Excel spreadsheet → skillsearch("excel microsoft spreadsheet sheet")</example>
    <example>I have to build a React app with Tailwind CSS → skillsearch("react tailwind css javascript")</example>
+   <example>Review/evaluate this code → I read enough to see it uses Postgres and Express → skillsearch("postgres") and skillsearch("express node") BEFORE forming any conclusions</example>
+   <example>What's in this repo? → glob/read to learn the stack → it's a Go + SQLite project → skillsearch("go") and skillsearch("sqlite") before evaluating it</example>
+   <example>Debug why this test fails → it uses matter.js → skillsearch("matter.js physics") first</example>
 
 2. DECIDE FROM THE NAMES.
    - If a returned name clearly matches the task, load it with \`skill\` (see below).
@@ -48,7 +52,7 @@ MANDATORY WORKFLOW — follow it for every task before you act:
 
 4. LOAD AND OBEY. Call \`skill\` with the exact name to load the full instructions, then follow them in preference to your own defaults.
 
-In short: every task begins with \`skillsearch\`. No exceptions.
+In short: every task — building, reviewing, debugging, exploring, or explaining — begins with \`skillsearch\`, and you search again for any technology you discover along the way. No exceptions.
 </skills>`;
 
 export const SkillsPlugin: Plugin = async (ctx) => {
