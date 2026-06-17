@@ -6,10 +6,18 @@
  *
  * SEARCH STRATEGY:
  * 1. Parse user query into include/exclude terms (using search-string for Gmail syntax)
- * 2. Filter: ALL include terms must appear in skill (name, description, or toolName)
+ * 2. Filter: ANY include term appearing in skill is a candidate (name, description, or toolName)
  * 3. Exclude: Remove matches that contain any exclude term
- * 4. Rank: Score by match location (name matches weighted 3×, description 1×)
+ * 4. Rank: Score by match count and location (name matches weighted 3×, description 1×)
  * 5. Sort: By total score (desc) → name matches (desc) → alphabetically
+ * 6. Cap: Keep only the top results so OR-matching does not flood the caller
+ *
+ * WHY OR, NOT AND: Agents are instructed to search with several precise keywords
+ * (e.g. "nodejs static file server express"). Requiring EVERY term to appear made
+ * descriptive queries return zero results even when an obviously-relevant skill
+ * existed — the better the query, the worse it matched. Matching ANY term and
+ * letting the ranking float the best candidates fixes this. Recall-first by
+ * design: results are names only, cheap to scan, and refined via skillinfo/skill.
  *
  * QUERY INTERPRETATION:
  * - "git commit" → include: [git, commit]
@@ -183,22 +191,29 @@ export function createSkillSearcher(registry: SkillRegistryController): SkillSea
       query,
     };
 
-    // List all skills if query is empty or "*"
+    // Browse all skills when the query has no positive terms: "*", empty, or
+    // exclusion-only (e.g. "-rebase" = everything except rebase). Any exclusions
+    // are applied downstream in search() via shouldIncludeSkill. Without this,
+    // OR-matching on an empty include list ([].some() === false) would wrongly
+    // return nothing for exclusion-only queries.
     if (
-      queryString === '' ||
       queryString === '*' ||
       (query.include.length === 1 && query.include[0] === '*') ||
-      (query.include.length === 0 && query.hasExclusions === false)
+      query.include.length === 0
     ) {
       output.matches = skills;
       output.totalMatches = skills.length;
-      output.feedback = `Listing all ${skills.length} skills`;
+      output.feedback = query.hasExclusions
+        ? `Listing all ${skills.length} skills (exclusions applied)`
+        : `Listing all ${skills.length} skills`;
       return output;
     }
 
+    // OR-matching: a skill is a candidate if it contains ANY include term. The
+    // ranking step (rankSkill) then orders by how many terms hit and where.
     let results = skills.filter((skill) => {
       const haystack = `${skill.toolName} ${skill.name} ${skill.description}`.toLowerCase();
-      return query.include.every((term) => haystack.includes(term));
+      return query.include.some((term) => haystack.includes(term));
     });
 
     output.matches = results;
@@ -218,8 +233,6 @@ export function createSkillSearcher(registry: SkillRegistryController): SkillSea
       shouldIncludeSkill(skill, resolved.query.exclude)
     );
 
-    const totalMatches = results.length;
-
     const ranked: SkillRank[] = results
       .map((skill) => rankSkill(skill, resolved.query.include))
       .sort((a, b) => {
@@ -232,14 +245,33 @@ export function createSkillSearcher(registry: SkillRegistryController): SkillSea
         return a.skill.name.localeCompare(b.skill.name);
       });
 
-    const matches = ranked.map((r) => r.skill);
+    // A "*"/empty query lists every skill and must not be capped. A keyword
+    // query is OR-matched, which can surface many weak hits, so we keep only the
+    // top-ranked few; the ranking has already floated the best candidates up.
+    const include = resolved.query.include;
+    const isListAll =
+      include.length === 0 || (include.length === 1 && include[0] === '*');
+
+    const fullCount = ranked.length;
+    const matches = (isListAll ? ranked : ranked.slice(0, MAX_RESULTS)).map(
+      (r) => r.skill,
+    );
+
+    const capped = !isListAll && fullCount > MAX_RESULTS;
+    const feedback = capped
+      ? `${resolved.feedback} | Showing top ${MAX_RESULTS}`
+      : resolved.feedback;
 
     return {
       matches,
-      totalMatches,
-      feedback: resolved.feedback,
+      totalMatches: matches.length,
+      feedback,
       query: resolved.query,
       totalSkills: registry.skills.length,
     };
   };
 }
+
+// Cap on keyword-query results. OR-matching is recall-first; this keeps the
+// returned name list short enough to scan without losing the best matches.
+const MAX_RESULTS = 6;

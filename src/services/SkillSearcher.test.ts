@@ -205,4 +205,74 @@ describe('createSkillSearcher', () => {
     const result = searcher('git-rebase');
     expect(result.matches[0].name).toBe('git-rebase');
   });
+
+  // Regression: a descriptive multi-keyword query used to return ZERO results
+  // because every term had to appear (AND). OR-matching must surface the skill.
+  it('matches when only SOME query terms hit (OR logic, the nodejs regression)', () => {
+    const searcher = createSkillSearcher(makeController([
+      makeSkill({
+        name: 'nodejs-static-server',
+        toolName: 'nodejs_static_server',
+        description: 'Build a Node.js static file server with Express',
+      }),
+      makeSkill({
+        name: 'matterjs-physics',
+        toolName: 'matterjs_physics',
+        description: 'Physics engine using matter.js for canvas games',
+      }),
+    ]));
+
+    const result = searcher('nodejs static file server express project structure');
+    expect(result.totalMatches).toBeGreaterThanOrEqual(1);
+    expect(result.matches[0].name).toBe('nodejs-static-server');
+
+    const physics = searcher('javascript game development physics matter.js');
+    expect(physics.matches.map((s) => s.name)).toContain('matterjs-physics');
+  });
+
+  it('caps keyword results to the top few and says so', () => {
+    const many = Array.from({ length: 10 }, (_, i) =>
+      makeSkill({ name: `svc-${i}`, toolName: `svc_${i}`, description: 'a server service file' }),
+    );
+    const searcher = createSkillSearcher(makeController(many));
+    const result = searcher('server service file');
+    expect(result.matches.length).toBe(6);
+    expect(result.totalMatches).toBe(6);
+    expect(result.feedback).toContain('Showing top 6');
+  });
+
+  // Exclusion-only queries must list everything except the excluded terms.
+  // Under OR-matching an empty include list would otherwise match nothing.
+  it('handles exclusion-only queries (everything except)', () => {
+    const searcher = createSkillSearcher(makeController(skills));
+
+    const notRebase = searcher('-rebase');
+    expect(notRebase.matches.map((s) => s.name).sort()).toEqual([
+      'docker-compose', 'git-commit', 'python-async',
+    ]);
+
+    const notEither = searcher('-rebase -commit');
+    expect(notEither.matches.map((s) => s.name).sort()).toEqual([
+      'docker-compose', 'python-async',
+    ]);
+  });
+
+  it('keyword queries stay scoped (OR does not fetch everything)', () => {
+    const searcher = createSkillSearcher(makeController(skills));
+    const result = searcher('git python docker deployment async');
+    // OR matches several, but never silently returns the whole catalog unranked;
+    // and a term that hits nothing must still yield zero.
+    expect(searcher('zzz-nope').totalMatches).toBe(0);
+    expect(result.totalMatches).toBeLessThanOrEqual(skills.length);
+    expect(result.totalMatches).toBeGreaterThan(0);
+  });
+
+  it('does not cap the wildcard list-all query', () => {
+    const many = Array.from({ length: 10 }, (_, i) =>
+      makeSkill({ name: `svc-${i}`, toolName: `svc_${i}`, description: 'service' }),
+    );
+    const searcher = createSkillSearcher(makeController(many));
+    const result = searcher('*');
+    expect(result.matches).toHaveLength(10);
+  });
 });

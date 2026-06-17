@@ -1,6 +1,6 @@
 {
   "name": "@felipegenef/opencode-lazy-skills",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "OpenCode plugin that swaps the always-on <available_skills> catalog for on-demand skill search and loading — defers to opencode's native skill tool when present, polyfills it for older versions.",
   "type": "module",
   "module": "src/index.ts",

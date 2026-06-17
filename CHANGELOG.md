@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0 — 2026-06-17
+
+Fixes the search algorithm so descriptive, multi-keyword queries actually return results.
+
+- **`skillsearch` now matches ANY query term (OR), not ALL of them (AND).** Previously every
+  word in the query had to appear in a skill, so a query like
+  `"nodejs static file server express project structure"` returned ZERO matches even when an
+  obviously relevant skill existed — the more precisely the agent searched, the worse it matched.
+  This directly conflicted with the v1.1.0 prompt that tells the agent to search with several
+  keywords. Skills are now ranked by how many terms hit (name matches weighted 3×) and the best
+  candidates float to the top.
+- **Results are capped to the top 6** for keyword queries so OR-matching doesn't flood the caller;
+  the wildcard list-all (`*`) query is never capped. Feedback notes when results were trimmed.
+
 ## 1.1.0 — 2026-06-16
 
 Reworks skill discovery into a three-step, compulsory workflow so agents (and subagents) reliably

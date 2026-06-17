@@ -100,15 +100,25 @@ opencode plugin @felipegenef/opencode-lazy-skills --global
 ## Updating
 
 Opencode resolves this plugin to whatever `latest` was at install time and caches it locally —
-it does **not** re-check the registry on later launches. To pick up a new release, force a
-re-fetch:
+it does **not** re-check the registry on later launches. Worse, the cache keeps a pinned
+`package.json` + `package-lock.json` (e.g. `"@felipegenef/opencode-lazy-skills": "1.0.0"`), so
+even `--force` can see the pin already satisfied and install nothing. The reliable way to pick up
+a new release is to **delete the cached folder first, then re-install**:
 
 ```bash
+rm -rf ~/.cache/opencode/packages/@felipegenef/opencode-lazy-skills@latest
 opencode plugin @felipegenef/opencode-lazy-skills --global --force
 ```
 
-Without `--force`, opencode sees the plugin is already configured and skips re-fetching, even if
-a newer version has been published.
+Deleting the folder forces opencode to rebuild the cache from scratch and re-resolve `latest`. To
+confirm afterwards, check the installed version:
+
+```bash
+cat ~/.cache/opencode/packages/@felipegenef/opencode-lazy-skills@latest/node_modules/@felipegenef/opencode-lazy-skills/package.json | grep version
+```
+
+(`--force` on its own only helps when no pinned lockfile is present; without it, opencode skips
+re-fetching entirely.)
 
 ## Uninstalling
 
